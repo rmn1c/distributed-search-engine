@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: coordinator
+  jackson:
+    default-property-inclusion: non_null
+
+logging:
+  level:
+    com.search: DEBUG

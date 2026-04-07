@@ -1,0 +1,21 @@
+server:
+  port: ${NODE_PORT:8081}
+
+spring:
+  application:
+    name: datanode-${NODE_ID:node-1}
+  jackson:
+    default-property-inclusion: non_null
+
+node:
+  id: ${NODE_ID:node-1}
+  url: http://localhost:${NODE_PORT:8081}
+  storage:
+    root: ${NODE_STORAGE_ROOT:./data/${NODE_ID:node-1}}
+
+coordinator:
+  url: ${COORDINATOR_URL:http://localhost:8080}
+
+logging:
+  level:
+    com.search: DEBUG
