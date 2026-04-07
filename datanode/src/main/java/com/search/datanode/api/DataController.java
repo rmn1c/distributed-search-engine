@@ -43,12 +43,16 @@ public class DataController {
             throws Exception {
         LuceneShard shard = shardManager.getOrThrow(req.indexName(), req.shardId());
         var query  = shard.buildQuery(req.query());
-        FieldDoc after = buildAfterDoc(req.searchAfter());
 
-        LuceneShard.ShardSearchResult result =
-            (req.shardPitId() != null && !req.shardPitId().isBlank())
-                ? shard.searchWithPIT(req.shardPitId(), query, req.size(), after)
-                : shard.search(query, req.size(), after);
+        boolean hasPit = req.shardPitId() != null && !req.shardPitId().isBlank();
+        int maxDoc = hasPit
+            ? shard.getPITMaxDoc(req.shardPitId())
+            : shard.getLiveMaxDoc();
+        FieldDoc after = buildAfterDoc(req.searchAfter(), maxDoc);
+
+        LuceneShard.ShardSearchResult result = hasPit
+            ? shard.searchWithPIT(req.shardPitId(), query, req.size(), after)
+            : shard.search(query, req.size(), after);
 
         return ResponseEntity.ok(new ShardSearchResponse(result.hits(), result.totalHits()));
     }
@@ -60,15 +64,20 @@ public class DataController {
      * Lucene's searchAfter() uses FieldDoc.fields[] (not FieldDoc.score) for comparison:
      *   fields[0] = Float   (used by RelevanceComparator.setTopValue)
      *   fields[1] = BytesRef (used by TermValComparator.setTopValue)
+     *
+     * IMPORTANT: FieldDoc.doc must satisfy after.doc < maxDoc (Lucene assertion).
+     * We use maxDoc - 1 (the highest valid doc ID) so that the cursor document
+     * itself — which has actual doc ID <= maxDoc - 1 — is never treated as "after"
+     * the cursor. Since _id is globally unique, no two docs share the same sort
+     * values, so the doc-ID tiebreaker is only reached for the exact cursor doc.
      */
-    private FieldDoc buildAfterDoc(List<Object> sa) {
+    private FieldDoc buildAfterDoc(List<Object> sa, int maxDoc) {
         if (sa == null || sa.size() < 2) return null;
-        float    score = ((Number) sa.get(0)).floatValue();
-        BytesRef idRef = new BytesRef(sa.get(1).toString());
-        // after.doc must be < shard's maxDoc or Lucene throws.
-        // Since _id is unique across sort fields, the doc-ID tiebreaker is never
-        // reached — any in-bounds value works. 0 is always valid for non-empty shards.
-        return new FieldDoc(0, score,
+        float    score  = ((Number) sa.get(0)).floatValue();
+        BytesRef idRef  = new BytesRef(sa.get(1).toString());
+        // maxDoc == 0 means empty shard — no cursor needed; return null if no docs
+        int      safeDoc = maxDoc > 0 ? maxDoc - 1 : 0;
+        return new FieldDoc(safeDoc, score,
             new Object[]{ Float.valueOf(score), idRef });
     }
 }

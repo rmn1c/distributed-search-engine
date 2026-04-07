@@ -249,8 +249,14 @@ public class LuceneShard implements Closeable {
             // Sent back to the client; reconstructed as FieldDoc on the next page request.
             // fd.fields[0] = Float  (from RelevanceComparator for FIELD_SCORE)
             // fd.fields[1] = BytesRef (from TermValComparator for SortField "_id")
+            //
+            // IMPORTANT: fd.score is NaN in the searchAfter path because
+            // searchAfter(after, query, size, sort) does not guarantee score population.
+            // fd.fields[0] is always set by RelevanceComparator when FIELD_SCORE is the
+            // primary sort, so use it as the authoritative score for the cursor.
             List<Object> sortValues = List.of(
-                fd.score,
+                fd.fields != null && fd.fields.length > 0
+                    ? ((Number) fd.fields[0]).floatValue() : fd.score,
                 fd.fields != null && fd.fields.length > 1
                     ? bytesRefToString(fd.fields[1]) : id
             );
@@ -346,6 +352,28 @@ public class LuceneShard implements Closeable {
         directory.close();
         analyzer.close();
         log.info("Shard {}/{} closed cleanly", indexName, shardId);
+    }
+
+    /**
+     * Returns the maxDoc of the live searcher's reader.
+     * Used by DataController to clamp the searchAfter cursor's doc field.
+     */
+    public int getLiveMaxDoc() throws IOException {
+        IndexSearcher searcher = searcherManager.acquire();
+        try {
+            return searcher.getIndexReader().maxDoc();
+        } finally {
+            searcherManager.release(searcher);
+        }
+    }
+
+    /**
+     * Returns the maxDoc of a pinned PIT reader.
+     * Returns 0 if the PIT is not found (caller should handle).
+     */
+    public int getPITMaxDoc(String pitId) {
+        DirectoryReader r = pitReaders.get(pitId);
+        return r != null ? r.maxDoc() : 0;
     }
 
     public String getIndexName() { return indexName; }
