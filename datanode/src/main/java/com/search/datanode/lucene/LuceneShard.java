@@ -224,11 +224,14 @@ public class LuceneShard implements Closeable {
 
     private ShardSearchResult execute(IndexSearcher searcher, Query query,
                                        int size, FieldDoc after) throws IOException {
-        // TopFieldDocs returned when Sort is provided; scores computed because
-        // PAGINATION_SORT starts with FIELD_SCORE.
-        TopFieldDocs topDocs = (after != null)
-            ? searcher.searchAfter(after, query, size, PAGINATION_SORT)
-            : searcher.search(query, size, PAGINATION_SORT, true);
+        // searchAfter(ScoreDoc, Query, int, Sort) returns TopDocs in Lucene 9 — explicit cast
+        // is safe because passing a Sort guarantees Lucene returns a TopFieldDocs instance.
+        final TopFieldDocs topDocs;
+        if (after != null) {
+            topDocs = (TopFieldDocs) searcher.searchAfter(after, query, size, PAGINATION_SORT);
+        } else {
+            topDocs = searcher.search(query, size, PAGINATION_SORT, true);
+        }
 
         List<SearchHit> hits = new ArrayList<>(topDocs.scoreDocs.length);
         StoredFields storedFields = searcher.storedFields();

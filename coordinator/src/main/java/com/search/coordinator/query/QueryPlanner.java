@@ -28,10 +28,11 @@ public class QueryPlanner {
         List<ShardQueryPlan> plans = new ArrayList<>(meta.getShardCount());
 
         for (int shardId = 0; shardId < meta.getShardCount(); shardId++) {
+            final int sid = shardId;   // effectively-final capture for lambda
             // Use primary for reads (extend here for replica round-robin load balancing)
             ShardAssignment target = meta.getPrimary(shardId)
                 .orElseThrow(() -> new IllegalStateException(
-                    "No primary for shard " + shardId + " in " + meta.getName()));
+                    "No primary for shard " + sid + " in " + meta.getName()));
 
             String shardPitId = (shardPitIds != null) ? shardPitIds.get(shardId) : null;
 

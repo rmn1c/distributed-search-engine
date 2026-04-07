@@ -20,7 +20,7 @@ public class AppConfig {
      * Each shard HTTP call blocks on I/O — virtual threads park cheaply
      * without consuming platform threads, giving free parallelism at scale.
      */
-    @Bean("scatterGatherExecutor")
+    @Bean("virtualThreadExecutor")
     public ExecutorService scatterGatherExecutor() {
         return Executors.newVirtualThreadPerTaskExecutor();
     }

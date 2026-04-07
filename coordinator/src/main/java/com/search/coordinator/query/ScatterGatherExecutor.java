@@ -34,7 +34,7 @@ public class ScatterGatherExecutor {
     private final ExecutorService executor;   // virtual-thread executor from AppConfig
 
     public ScatterGatherExecutor(RestTemplate restTemplate,
-                                  @Qualifier("scatterGatherExecutor") ExecutorService executor) {
+                                  @Qualifier("virtualThreadExecutor") ExecutorService executor) {
         this.restTemplate = restTemplate;
         this.executor = executor;
     }

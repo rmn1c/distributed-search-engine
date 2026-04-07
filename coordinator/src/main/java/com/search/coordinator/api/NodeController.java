@@ -35,7 +35,7 @@ public class NodeController {
     }
 
     @DeleteMapping("/{nodeId}")
-    public ResponseEntity<Void> deregister(@PathVariable String nodeId) {
+    public ResponseEntity<Void> deregister(@PathVariable("nodeId") String nodeId) {
         nodeRegistry.deregister(nodeId);
         return ResponseEntity.noContent().build();
     }

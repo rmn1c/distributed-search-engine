@@ -47,7 +47,7 @@ public class SearchController {
 
     @PostMapping("/{index}/search")
     public ResponseEntity<SearchResponse> search(
-            @PathVariable String index,
+            @PathVariable("index") String index,
             @RequestBody SearchRequest req) {
 
         IndexMeta meta = indexManager.getIndex(index);
@@ -75,7 +75,7 @@ public class SearchController {
 
     @PostMapping("/{index}/pit")
     public ResponseEntity<CreatePITResponse> createPIT(
-            @PathVariable String index,
+            @PathVariable("index") String index,
             @RequestBody CreatePITRequest req) {
         IndexMeta meta = indexManager.getIndex(index);
         Duration ttl   = parseTTL(req.keepAlive());
@@ -84,7 +84,7 @@ public class SearchController {
     }
 
     @DeleteMapping("/pit/{pitId}")
-    public ResponseEntity<Void> closePIT(@PathVariable String pitId) {
+    public ResponseEntity<Void> closePIT(@PathVariable("pitId") String pitId) {
         pitManager.close(pitId);
         return ResponseEntity.noContent().build();
     }

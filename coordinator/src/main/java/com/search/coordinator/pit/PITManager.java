@@ -60,8 +60,9 @@ public class PITManager {
         Map<Integer, ShardPITInfo> shardPITs = new HashMap<>();
 
         for (int shardId = 0; shardId < indexMeta.getShardCount(); shardId++) {
+            final int sid = shardId;   // effectively-final capture for lambda
             ShardAssignment primary = indexMeta.getPrimary(shardId)
-                .orElseThrow(() -> new IllegalStateException("No primary for shard " + shardId));
+                .orElseThrow(() -> new IllegalStateException("No primary for shard " + sid));
             try {
                 // DataNode opens DirectoryReader snapshot, returns shard-local PIT ID
                 String shardPitId = restTemplate.postForObject(

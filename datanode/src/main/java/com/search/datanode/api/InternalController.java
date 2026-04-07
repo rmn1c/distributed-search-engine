@@ -43,8 +43,8 @@ public class InternalController {
 
     /** Push-replication endpoint: coordinator sends doc after primary commits. */
     @PostMapping("/shards/{index}/{shardId}/index")
-    public ResponseEntity<Void> replicate(@PathVariable String index,
-                                           @PathVariable int shardId,
+    public ResponseEntity<Void> replicate(@PathVariable("index") String index,
+                                           @PathVariable("shardId") int shardId,
                                            @RequestBody IndexDocumentRequest req) {
         replication.apply(index, shardId, req);
         return ResponseEntity.ok().build();
@@ -55,17 +55,17 @@ public class InternalController {
      * Returns the shard-local pitId that the coordinator stores in PITContext.shardPITs.
      */
     @PostMapping("/shards/{index}/{shardId}/pit")
-    public ResponseEntity<String> openPIT(@PathVariable String index,
-                                           @PathVariable int shardId) throws Exception {
+    public ResponseEntity<String> openPIT(@PathVariable("index") String index,
+                                           @PathVariable("shardId") int shardId) throws Exception {
         LuceneShard shard = shardManager.getOrThrow(index, shardId);
         return ResponseEntity.ok(shard.openPIT());
     }
 
     /** Closes and releases a PIT snapshot — frees the pinned DirectoryReader. */
     @DeleteMapping("/shards/{index}/{shardId}/pit/{pitId}")
-    public ResponseEntity<Void> closePIT(@PathVariable String index,
-                                          @PathVariable int shardId,
-                                          @PathVariable String pitId) throws Exception {
+    public ResponseEntity<Void> closePIT(@PathVariable("index") String index,
+                                          @PathVariable("shardId") int shardId,
+                                          @PathVariable("pitId") String pitId) throws Exception {
         shardManager.getOrThrow(index, shardId).closePIT(pitId);
         return ResponseEntity.noContent().build();
     }

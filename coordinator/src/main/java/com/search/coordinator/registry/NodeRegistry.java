@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public record NodeInfo(String nodeId, String url, long registeredAt) {}
-
 @Component
 public class NodeRegistry {
     private static final Logger log = LoggerFactory.getLogger(NodeRegistry.class);

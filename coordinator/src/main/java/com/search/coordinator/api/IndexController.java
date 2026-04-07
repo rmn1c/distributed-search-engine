@@ -52,7 +52,7 @@ public class IndexController {
 
     @PostMapping("/{index}/documents")
     public ResponseEntity<IndexDocumentResponse> indexDocument(
-            @PathVariable String index,
+            @PathVariable("index") String index,
             @RequestBody IndexDocumentRequest req) {
 
         IndexMeta meta = indexManager.getIndex(index);
@@ -80,7 +80,7 @@ public class IndexController {
     }
 
     @GetMapping("/{index}")
-    public ResponseEntity<Map<String, Object>> getIndex(@PathVariable String index) {
+    public ResponseEntity<Map<String, Object>> getIndex(@PathVariable("index") String index) {
         IndexMeta meta = indexManager.getIndex(index);
         return ResponseEntity.ok(Map.of(
             "index",         meta.getName(),

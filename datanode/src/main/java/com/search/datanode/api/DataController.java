@@ -27,8 +27,8 @@ public class DataController {
 
     /** Primary write endpoint — called by coordinator for primary shard writes. */
     @PostMapping("/shards/{index}/{shardId}/documents")
-    public ResponseEntity<Void> index(@PathVariable String index,
-                                       @PathVariable int shardId,
+    public ResponseEntity<Void> index(@PathVariable("index") String index,
+                                       @PathVariable("shardId") int shardId,
                                        @RequestBody IndexDocumentRequest req) throws Exception {
         shardManager.getOrCreate(index, shardId).indexDocument(req.id(), req.source());
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -65,7 +65,10 @@ public class DataController {
         if (sa == null || sa.size() < 2) return null;
         float    score = ((Number) sa.get(0)).floatValue();
         BytesRef idRef = new BytesRef(sa.get(1).toString());
-        return new FieldDoc(Integer.MAX_VALUE, score,
+        // after.doc must be < shard's maxDoc or Lucene throws.
+        // Since _id is unique across sort fields, the doc-ID tiebreaker is never
+        // reached — any in-bounds value works. 0 is always valid for non-empty shards.
+        return new FieldDoc(0, score,
             new Object[]{ Float.valueOf(score), idRef });
     }
 }
